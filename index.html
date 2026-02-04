@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ハングル組み合わせシミュレーター</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; background: #f4f7f6; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+        .display-area { font-size: 80px; margin: 20px; padding: 20px; border: 2px dashed #ccc; min-height: 120px; }
+        .romaji { font-size: 24px; color: #666; height: 30px; }
+        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        select { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ddd; }
+        h3 { font-size: 14px; margin-bottom: 5px; color: #333; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>ハングル・シミュレーター</h2>
+    
+    <div class="display-area" id="char-display">가</div>
+    <div class="romaji" id="romaji-display">ga</div>
+
+    <div class="controls">
+        <div>
+            <h3>子音 (Initial)</h3>
+            <select id="cho" onchange="updateHangeul()">
+                <option value="0">ㄱ (g/k)</option>
+                <option value="1">ㄲ (kk)</option>
+                <option value="2">ㄴ (n)</option>
+                <option value="3">ㄷ (d/t)</option>
+                <option value="4">ㄸ (tt)</option>
+                <option value="5">ㄹ (r/l)</option>
+                <option value="6">ㅁ (m)</option>
+                <option value="7">ㅂ (b/p)</option>
+                <option value="8">ㅃ (pp)</option>
+                <option value="9">ㅅ (s)</option>
+                <option value="10">ㅆ (ss)</option>
+                <option value="11" selected>ㅇ (silent/-)</option>
+                <option value="12">ㅈ (j)</option>
+                <option value="13">ㅉ (jj)</option>
+                <option value="14">ㅊ (ch)</option>
+                <option value="15">ㅋ (k)</option>
+                <option value="16">ㅌ (t)</option>
+                <option value="17">ㅍ (p)</option>
+                <option value="18">ㅎ (h)</option>
+            </select>
+        </div>
+        <div>
+            <h3>母音 (Vowel)</h3>
+            <select id="jung" onchange="updateHangeul()">
+                <option value="0" selected>ㅏ (a)</option>
+                <option value="1">ㅐ (ae)</option>
+                <option value="2">ㅑ (ya)</option>
+                <option value="4">ㅓ (eo)</option>
+                <option value="8">ㅗ (o)</option>
+                <option value="13">ㅜ (u)</option>
+                <option value="18">ㅡ (eu)</option>
+                <option value="20">ㅣ (i)</option>
+            </select>
+        </div>
+        <div>
+            <h3>パッチム (Batchim)</h3>
+            <select id="jong" onchange="updateHangeul()">
+                <option value="0">なし</option>
+                <option value="1">ㄱ (k)</option>
+                <option value="4">ㄴ (n)</option>
+                <option value="7">ㄷ (t)</option>
+                <option value="8">ㄹ (l)</option>
+                <option value="16">ㅁ (m)</option>
+                <option value="17">ㅂ (p)</option>
+                <option value="19">ㅅ (t)</option>
+                <option value="21">ㅇ (ng)</option>
+            </select>
+        </div>
+    </div>
+</div>
+
+<script>
+function updateHangeul() {
+    const cho = parseInt(document.getElementById('cho').value);
+    const jung = parseInt(document.getElementById('jung').value);
+    const jong = parseInt(document.getElementById('jong').value);
+
+    // Unicodeのハングル音節公式: (初声 * 21 * 28) + (中声 * 28) + 終声 + 0xAC00
+    const charCode = (cho * 21 * 28) + (jung * 28) + jong + 0xAC00;
+    const resultChar = String.fromCharCode(charCode);
+    
+    document.getElementById('char-display').innerText = resultChar;
+    
+    // 簡易的な読み方の表示（本来はもっと複雑なマッピングが必要）
+    const choList = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
+    const jungList = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","yi","i"];
+    const jongList = ["","k","kk","ks","n","nj","nh","t","l","lg","lm","lb","ls","lt","lp","lh","m","p","ps","t","ss","ng","j","ch","k","t","p","h"];
+    
+    document.getElementById('romaji-display').innerText = choList[cho] + jungList[jung] + jongList[jong];
+}
+// 初期表示
+updateHangeul();
+</script>
+
+</body>
+</html>
