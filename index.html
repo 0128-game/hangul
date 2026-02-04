@@ -2,102 +2,125 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ハングル組み合わせシミュレーター</title>
+    <title>ハングル・連音化シミュレーター</title>
     <style>
-        body { font-family: sans-serif; text-align: center; background: #f4f7f6; padding: 20px; }
-        .container { max-width: 600px; margin: auto; background: white; padding: 20px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
-        .display-area { font-size: 80px; margin: 20px; padding: 20px; border: 2px dashed #ccc; min-height: 120px; }
-        .romaji { font-size: 24px; color: #666; height: 30px; }
-        .controls { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-        select { padding: 10px; font-size: 16px; border-radius: 5px; border: 1px solid #ddd; }
-        h3 { font-size: 14px; margin-bottom: 5px; color: #333; }
+        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; }
+        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { display: flex; gap: 20px; max-width: 900px; width: 100%; }
+        .editor, .result-area { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .editor { flex: 1; }
+        .result-area { flex: 1.5; min-height: 350px; }
+        .current-char { font-size: 80px; font-weight: bold; border: 2px solid var(--accent); border-radius: 10px; margin-bottom: 10px; height: 120px; display: flex; align-items: center; justify-content: center; background: #fff; }
+        .controls label { display: block; font-size: 12px; color: #666; margin-top: 10px; }
+        select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 16px; }
+        button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 15px; }
+        .word-display { font-size: 45px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; min-height: 60px; }
+        .pronunciation { font-size: 18px; color: #e67e22; margin-top: 10px; }
+        .romaji-list { font-size: 20px; color: #7f8c8d; }
+        .clear-btn { background: #95a5a6; }
+        .badge { font-size: 12px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h2>ハングル・シミュレーター</h2>
-    
-    <div class="display-area" id="char-display">가</div>
-    <div class="romaji" id="romaji-display">ga</div>
+<h2>ハングル・連音化シミュレーター</h2>
 
-    <div class="controls">
-        <div>
-            <h3>子音 (Initial)</h3>
-            <select id="cho" onchange="updateHangeul()">
-                <option value="0">ㄱ (g/k)</option>
-                <option value="1">ㄲ (kk)</option>
-                <option value="2">ㄴ (n)</option>
-                <option value="3">ㄷ (d/t)</option>
-                <option value="4">ㄸ (tt)</option>
-                <option value="5">ㄹ (r/l)</option>
-                <option value="6">ㅁ (m)</option>
-                <option value="7">ㅂ (b/p)</option>
-                <option value="8">ㅃ (pp)</option>
-                <option value="9">ㅅ (s)</option>
-                <option value="10">ㅆ (ss)</option>
-                <option value="11" selected>ㅇ (silent/-)</option>
-                <option value="12">ㅈ (j)</option>
-                <option value="13">ㅉ (jj)</option>
-                <option value="14">ㅊ (ch)</option>
-                <option value="15">ㅋ (k)</option>
-                <option value="16">ㅌ (t)</option>
-                <option value="17">ㅍ (p)</option>
-                <option value="18">ㅎ (h)</option>
-            </select>
+<div class="container">
+    <div class="editor">
+        <div class="current-char" id="preview-char"></div>
+        <div class="controls">
+            <label>初声 (子音)</label><select id="cho" onchange="updatePreview()"></select>
+            <label>中声 (母音)</label><select id="jung" onchange="updatePreview()"></select>
+            <label>終声 (パッチム)</label><select id="jong" onchange="updatePreview()"></select>
         </div>
-        <div>
-            <h3>母音 (Vowel)</h3>
-            <select id="jung" onchange="updateHangeul()">
-                <option value="0" selected>ㅏ (a)</option>
-                <option value="1">ㅐ (ae)</option>
-                <option value="2">ㅑ (ya)</option>
-                <option value="4">ㅓ (eo)</option>
-                <option value="8">ㅗ (o)</option>
-                <option value="13">ㅜ (u)</option>
-                <option value="18">ㅡ (eu)</option>
-                <option value="20">ㅣ (i)</option>
-            </select>
-        </div>
-        <div>
-            <h3>パッチム (Batchim)</h3>
-            <select id="jong" onchange="updateHangeul()">
-                <option value="0">なし</option>
-                <option value="1">ㄱ (k)</option>
-                <option value="4">ㄴ (n)</option>
-                <option value="7">ㄷ (t)</option>
-                <option value="8">ㄹ (l)</option>
-                <option value="16">ㅁ (m)</option>
-                <option value="17">ㅂ (p)</option>
-                <option value="19">ㅅ (t)</option>
-                <option value="21">ㅇ (ng)</option>
-            </select>
-        </div>
+        <button onclick="addChar()">文字を追加 ＋</button>
+        <button class="clear-btn" onclick="clearAll()">リセット</button>
+    </div>
+
+    <div class="result-area">
+        <h3>表記</h3>
+        <div class="word-display" id="word-out"></div>
+        <h3>読み（ローマ字）</h3>
+        <div class="romaji-list" id="romaji-out"></div>
+        <div id="liaison-note" class="pronunciation"></div>
     </div>
 </div>
 
 <script>
-function updateHangeul() {
-    const cho = parseInt(document.getElementById('cho').value);
-    const jung = parseInt(document.getElementById('jung').value);
-    const jong = parseInt(document.getElementById('jong').value);
+const choList = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const jungList = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+const jongList = ["なし","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
 
-    // Unicodeのハングル音節公式: (初声 * 21 * 28) + (中声 * 28) + 終声 + 0xAC00
-    const charCode = (cho * 21 * 28) + (jung * 28) + jong + 0xAC00;
-    const resultChar = String.fromCharCode(charCode);
-    
-    document.getElementById('char-display').innerText = resultChar;
-    
-    // 簡易的な読み方の表示（本来はもっと複雑なマッピングが必要）
-    const choList = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
-    const jungList = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","yi","i"];
-    const jongList = ["","k","kk","ks","n","nj","nh","t","l","lg","lm","lb","ls","lt","lp","lh","m","p","ps","t","ss","ng","j","ch","k","t","p","h"];
-    
-    document.getElementById('romaji-display').innerText = choList[cho] + jungList[jung] + jongList[jong];
+const cRom = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
+const vRom = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
+const pRom = ["","k","kk","k","n","n","n","t","l","k","m","l","l","l","p","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
+
+let history = [];
+
+function init() {
+    const fill = (id, list) => {
+        const el = document.getElementById(id);
+        list.forEach((char, i) => {
+            let opt = document.createElement("option");
+            opt.value = i; opt.innerText = char;
+            if(id === 'cho' && i === 11) opt.selected = true;
+            el.appendChild(opt);
+        });
+    };
+    fill("cho", choList); fill("jung", jungList); fill("jong", jongList);
+    updatePreview();
 }
-// 初期表示
-updateHangeul();
-</script>
 
+function updatePreview() {
+    const c = parseInt(document.getElementById('cho').value);
+    const v = parseInt(document.getElementById('jung').value);
+    const p = parseInt(document.getElementById('jong').value);
+    const code = (c * 21 * 28) + (v * 28) + p + 0xAC00;
+    document.getElementById('preview-char').innerText = String.fromCharCode(code);
+}
+
+function addChar() {
+    const c = parseInt(document.getElementById('cho').value);
+    const v = parseInt(document.getElementById('jung').value);
+    const p = parseInt(document.getElementById('jong').value);
+    
+    history.push({ c, v, p, char: String.fromCharCode((c * 21 * 28) + (v * 28) + p + 0xAC00) });
+    render();
+}
+
+function render() {
+    let word = "";
+    let romaji = [];
+    let liaisonMsg = "";
+
+    for (let i = 0; i < history.length; i++) {
+        let cur = history[i];
+        word += cur.char;
+        
+        let r = cRom[cur.c] + vRom[cur.v] + pRom[cur.p];
+        
+        // 連音化チェック: 前の文字にパッチムがあり、今の文字の初声が 'ㅇ' (index 11)
+        if (i > 0 && history[i-1].p > 0 && cur.c === 11) {
+            let prevP = pRom[history[i-1].p];
+            // 簡易ローマ字書き換え (例: an-yeong -> a-nyeong)
+            romaji[i-1] = romaji[i-1].slice(0, -prevP.length); 
+            r = prevP + r;
+            liaisonMsg = "⚠️ 連音化が発生しています";
+        }
+        romaji.push(r);
+    }
+
+    document.getElementById('word-out').innerText = word;
+    document.getElementById('romaji-out').innerText = romaji.join("-");
+    document.getElementById('liaison-note').innerHTML = liaisonMsg;
+}
+
+function clearAll() {
+    history = [];
+    render();
+}
+
+init();
+</script>
 </body>
 </html>
