@@ -2,152 +2,177 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ハングル・ブロック・ビルダー【修正版】</title>
+    <title>ハングル・スクラッチ・ビルダー</title>
     <style>
-        :root { --c-bg: #e3f2fd; --v-bg: #f1f8e9; --p-bg: #fff3e0; --accent: #ff5252; }
-        body { font-family: sans-serif; background: #f0f2f5; display: flex; flex-direction: column; align-items: center; padding: 15px; }
-        .card { background: white; width: 100%; max-width: 550px; padding: 20px; border-radius: 20px; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
+        :root {
+            --cho-color: #ffab19;   /* 初声: オレンジ */
+            --jung-color: #4cbf39;  /* 中声: 緑 */
+            --jong-color: #4ca5ff;  /* 終声: 青 */
+            --bg-dark: #1e1e1e;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; display: flex; justify-content: center; padding: 20px; }
         
-        /* プレビューエリア */
-        .preview-box { font-size: 100px; text-align: center; height: 140px; line-height: 140px; background: #fafafa; border: 3px dashed #ddd; border-radius: 15px; margin-bottom: 20px; font-family: "Malgun Gothic", sans-serif; }
-        
-        /* ブロック選択エリア */
-        .row { display: flex; flex-wrap: wrap; gap: 6px; padding: 12px; border-radius: 12px; margin-bottom: 10px; position: relative; }
-        .label { position: absolute; top: -8px; left: 10px; font-size: 11px; background: white; padding: 0 5px; color: #888; border: 1px solid #eee; border-radius: 4px; }
-        
-        .cho-row { background: var(--c-bg); }
-        .jung-row { background: var(--v-bg); }
-        .jong-row { background: var(--p-bg); }
+        .container { width: 100%; max-width: 800px; display: grid; grid-template-columns: 300px 1fr; gap: 20px; }
 
-        .block { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: white; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 18px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .block.active { background: var(--accent); color: white; transform: scale(1.1); }
+        /* 左側：パレット（ブロック置き場） */
+        .palette { background: #fff; border-radius: 12px; padding: 15px; height: 85vh; overflow-y: auto; border: 1px solid #ddd; }
+        .palette-section { margin-bottom: 20px; }
+        .palette-title { font-size: 12px; font-weight: bold; margin-bottom: 8px; color: #666; text-transform: uppercase; }
+        
+        /* ブロックの基本スタイル */
+        .scratch-block {
+            display: inline-flex; align-items: center; justify-content: center;
+            padding: 8px 12px; margin: 4px; border-radius: 4px 15px 15px 4px;
+            color: white; font-weight: bold; cursor: pointer; user-select: none;
+            box-shadow: 0 2px 0 rgba(0,0,0,0.2); transition: transform 0.1s;
+        }
+        .scratch-block:active { transform: translateY(2px); box-shadow: none; }
+        .b-cho { background: var(--cho-color); }
+        .b-jung { background: var(--jung-color); }
+        .b-jong { background: var(--jong-color); }
+
+        /* 右側：ワークスペース */
+        .workspace { background: white; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; border: 1px solid #ddd; }
+        
+        /* 組み立てエリア */
+        .assembly-line {
+            background: #f9f9f9; border: 2px solid #eee; border-radius: 15px;
+            padding: 30px; display: flex; align-items: center; justify-content: center; gap: 10px; margin-bottom: 20px;
+        }
+        .slot {
+            width: 70px; height: 50px; border-radius: 8px; border: 3px dashed #ccc;
+            display: flex; align-items: center; justify-content: center; color: #ccc; font-weight: bold;
+        }
+        .slot.filled { border-style: solid; color: white; }
 
         /* 出力エリア */
-        .display { font-size: 45px; border-bottom: 3px solid var(--accent); min-height: 60px; margin: 20px 0 10px; font-family: "Malgun Gothic", sans-serif; }
-        .result-info { display: flex; justify-content: space-between; min-height: 24px; margin-bottom: 15px; }
+        .preview-circle { width: 120px; height: 120px; background: white; border: 5px solid var(--cho-color); border-radius: 50%; 
+                          margin: 0 auto 20px; display: flex; align-items: center; justify-content: center; font-size: 60px; font-weight: bold; }
         
-        .btns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-        button { padding: 15px; border: none; border-radius: 10px; font-weight: bold; cursor: pointer; font-size: 16px; }
-        .btn-add { background: #37474f; color: white; grid-column: span 2; }
-        .btn-trans { background: #4caf50; color: white; }
-        .btn-speak { background: #2196f3; color: white; }
-        .btn-del { background: #eee; color: #333; grid-column: span 2; }
+        .output-text { font-size: 40px; border-bottom: 4px solid #eee; min-height: 60px; margin-bottom: 10px; padding: 10px; }
+        
+        .control-panel { display: flex; gap: 10px; }
+        .btn { flex: 1; padding: 12px; border: none; border-radius: 8px; color: white; font-weight: bold; cursor: pointer; }
+        .btn-add { background: #4cbf39; }
+        .btn-speak { background: #4ca5ff; }
+        .btn-clear { background: #ff4c4c; }
     </style>
 </head>
 <body>
 
-<div class="card">
-    <div class="preview-box" id="preview"></div>
-    
-    <div class="row cho-row" id="cho-area"><span class="label">初声 (子音)</span></div>
-    <div class="row jung-row" id="jung-area"><span class="label">中声 (母音)</span></div>
-    <div class="row jong-row" id="jong-area"><span class="label">終声 (パッチム)</span></div>
-
-    <div class="btns">
-        <button class="btn-add" onclick="add()">この文字を確定</button>
-        <button class="btn-del" onclick="del()">1文字消す</button>
+<div class="container">
+    <div class="palette">
+        <div class="palette-section">
+            <div class="palette-title">初声 (Consonant)</div>
+            <div id="p-cho"></div>
+        </div>
+        <div class="palette-section">
+            <div class="palette-title">中声 (Vowel)</div>
+            <div id="p-jung"></div>
+        </div>
+        <div class="palette-section">
+            <div class="palette-title">終声 (Batchim)</div>
+            <div id="p-jong"></div>
+        </div>
     </div>
 
-    <div class="display" id="out-text"></div>
-    <div class="result-info">
-        <div id="out-romaji" style="color: #666; font-style: italic;"></div>
-        <div id="out-trans" style="color: var(--accent); font-weight: bold;"></div>
-    </div>
+    <div class="workspace">
+        <div class="preview-circle" id="preview-char">?</div>
 
-    <div class="btns">
-        <button class="btn-trans" onclick="translateNow()">翻訳</button>
-        <button class="btn-speak" onclick="speakNow()">再生</button>
+        <div class="assembly-line">
+            <div id="slot-cho" class="slot">初声</div>
+            <div style="font-size: 24px; color: #ccc;">+</div>
+            <div id="slot-jung" class="slot">中声</div>
+            <div style="font-size: 24px; color: #ccc;">+</div>
+            <div id="slot-jong" class="slot">終声</div>
+        </div>
+
+        <div class="control-panel">
+            <button class="btn btn-add" onclick="commitChar()">文字を追加する</button>
+            <button class="btn btn-clear" onclick="clearSlots()">リセット</button>
+        </div>
+
+        <div class="output-text" id="final-text"></div>
+        
+        <div class="control-panel">
+            <button class="btn btn-speak" onclick="speakText()">再生 (音声)</button>
+            <button class="btn btn-clear" onclick="deleteLast()">1字削除</button>
+        </div>
     </div>
 </div>
 
 <script>
 const CHO = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
 const JUNG = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
-const JONG = ["なし","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const JONG = ["(なし)","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
 
-const cR = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
-const vR = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
-const pR = ["","k","kk","k","n","n","n","t","l","k","m","l","l","l","p","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
+let selectedCho = 11; // ㅇ
+let selectedJung = 0; // ㅏ
+let selectedJong = 0; // なし
+let textStack = "";
 
-let cIdx = 11, vIdx = 0, pIdx = 0;
-let stack = [];
-
-function init() {
-    const build = (areaId, list, type) => {
-        const area = document.getElementById(areaId);
+function createPalette() {
+    const setup = (containerId, list, type) => {
+        const container = document.getElementById(containerId);
         list.forEach((char, i) => {
             const b = document.createElement('div');
-            b.className = 'block';
-            b.innerText = char === "なし" ? "✕" : char;
-            b.onclick = () => {
-                area.querySelectorAll('.block').forEach(el => el.classList.remove('active'));
-                b.classList.add('active');
-                if(type === 'c') cIdx = i;
-                if(type === 'v') vIdx = i;
-                if(type === 'p') pIdx = i;
-                update();
-            };
-            if((type==='c'&&i===11) || (type==='v'&&i===0) || (type==='p'&&i===0)) b.classList.add('active');
-            area.appendChild(b);
+            b.className = `scratch-block b-${type}`;
+            b.innerText = char;
+            b.onclick = () => selectBlock(type, i, char);
+            container.appendChild(b);
         });
     };
-    build('cho-area', CHO, 'c');
-    build('jung-area', JUNG, 'v');
-    build('jong-area', JONG, 'p');
-    update();
+    setup('p-cho', CHO, 'cho');
+    setup('p-jung', JUNG, 'jung');
+    setup('p-jong', JONG, 'jong');
 }
 
-function update() {
-    // 正しいハングルUnicode計算式
-    const code = (cIdx * 588) + (vIdx * 28) + pIdx + 44032;
-    document.getElementById('preview').innerText = String.fromCharCode(code);
+function selectBlock(type, index, char) {
+    const slot = document.getElementById(`slot-${type}`);
+    slot.innerText = char === "(なし)" ? "✕" : char;
+    slot.className = `slot filled b-${type}`;
+    
+    if(type === 'cho') selectedCho = index;
+    if(type === 'jung') selectedJung = index;
+    if(type === 'jong') selectedJong = index;
+    
+    updatePreview();
 }
 
-function add() {
-    stack.push({c:cIdx, v:vIdx, p:pIdx, char: document.getElementById('preview').innerText});
-    render();
+function updatePreview() {
+    const code = (selectedCho * 588) + (selectedJung * 28) + selectedJong + 44032;
+    document.getElementById('preview-char').innerText = String.fromCharCode(code);
 }
 
-function del() { stack.pop(); render(); }
+function commitChar() {
+    const char = document.getElementById('preview-char').innerText;
+    textStack += char;
+    document.getElementById('final-text').innerText = textStack;
+}
 
-function render() {
-    let txt = "", roms = [];
-    stack.forEach((h, i) => {
-        txt += h.char;
-        let r = cR[h.c] + vR[h.v] + pR[h.p];
-        // 連音化の簡易ロジック
-        if(i > 0 && stack[i-1].p > 0 && h.c === 11) {
-            let pVal = pR[stack[i-1].p];
-            roms[i-1] = roms[i-1].slice(0, -pVal.length);
-            r = pVal + r;
-        }
-        roms.push(r);
+function clearSlots() {
+    selectedCho = 11; selectedJung = 0; selectedJong = 0;
+    ['cho','jung','jong'].forEach(t => {
+        const s = document.getElementById(`slot-${t}`);
+        s.className = 'slot';
+        s.innerText = t === 'cho' ? '初声' : (t === 'jung' ? '中声' : '終声');
     });
-    document.getElementById('out-text').innerText = txt;
-    document.getElementById('out-romaji').innerText = roms.join("-");
-    document.getElementById('out-trans').innerText = "";
+    updatePreview();
 }
 
-async function translateNow() {
-    const q = document.getElementById('out-text').innerText;
-    if(!q) return;
-    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=ja&dt=t&q=${encodeURIComponent(q)}`;
-    try {
-        const res = await fetch(url);
-        const d = await res.json();
-        document.getElementById('out-trans').innerText = "≫ " + d[0][0][0];
-    } catch(e) { alert("翻訳に失敗しました"); }
+function deleteLast() {
+    textStack = textStack.slice(0, -1);
+    document.getElementById('final-text').innerText = textStack;
 }
 
-function speakNow() {
-    const t = document.getElementById('out-text').innerText;
-    if(!t) return;
-    const u = new SpeechSynthesisUtterance(t);
-    u.lang = 'ko-KR';
-    window.speechSynthesis.speak(u);
+function speakText() {
+    const msg = new SpeechSynthesisUtterance(textStack);
+    msg.lang = 'ko-KR';
+    window.speechSynthesis.speak(msg);
 }
 
-init();
+createPalette();
+updatePreview();
 </script>
 </body>
 </html>
