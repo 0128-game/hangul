@@ -2,122 +2,122 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>ハングル・連音化シミュレーター</title>
+    <title>ハングル・ビルダー Pro</title>
     <style>
-        :root { --primary: #2c3e50; --accent: #27ae60; --bg: #f8f9fa; }
-        body { font-family: sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
-        .container { display: flex; gap: 20px; max-width: 900px; width: 100%; }
-        .editor, .result-area { background: white; padding: 25px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        .editor { flex: 1; }
-        .result-area { flex: 1.5; min-height: 350px; }
-        .current-char { font-size: 80px; font-weight: bold; border: 2px solid var(--accent); border-radius: 10px; margin-bottom: 10px; height: 120px; display: flex; align-items: center; justify-content: center; background: #fff; }
-        .controls label { display: block; font-size: 12px; color: #666; margin-top: 10px; }
-        select { width: 100%; padding: 10px; border-radius: 5px; border: 1px solid #ddd; font-size: 16px; }
-        button { width: 100%; padding: 12px; background: var(--accent); color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; margin-top: 15px; }
-        .word-display { font-size: 45px; margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 10px; min-height: 60px; }
-        .pronunciation { font-size: 18px; color: #e67e22; margin-top: 10px; }
-        .romaji-list { font-size: 20px; color: #7f8c8d; }
-        .clear-btn { background: #95a5a6; }
-        .badge { font-size: 12px; background: #e74c3c; color: white; padding: 2px 6px; border-radius: 4px; vertical-align: middle; }
+        :root { --primary: #37474f; --accent: #ff5252; --bg: #f5f5f5; }
+        body { font-family: 'Malgun Gothic', 'Hiragino Sans', sans-serif; background: var(--bg); display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .card { background: white; padding: 25px; border-radius: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        .preview { font-size: 80px; text-align: center; border: 4px solid #eee; border-radius: 15px; margin-bottom: 20px; height: 120px; line-height: 120px; }
+        select { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 8px; border: 1px solid #ddd; font-size: 16px; }
+        .word-area { font-size: 40px; margin: 20px 0; min-height: 60px; border-bottom: 2px solid #ff5252; word-break: break-all; }
+        .reading { color: #78909c; font-size: 18px; margin-bottom: 10px; font-style: italic; }
+        .trans-res { background: #fff3f3; padding: 15px; border-radius: 10px; color: #d32f2f; font-weight: bold; font-size: 20px; display: none; margin-bottom: 15px; }
+        .btn-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        button { padding: 12px; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; transition: 0.2s; }
+        .btn-main { background: var(--primary); color: white; grid-column: span 2; }
+        .btn-trans { background: #4caf50; color: white; }
+        .btn-speak { background: #2196f3; color: white; }
+        .btn-del { background: #cfd8dc; }
+        button:hover { opacity: 0.8; }
     </style>
 </head>
 <body>
 
-<h2>ハングル・連音化シミュレーター</h2>
+<div class="card">
+    <div class="preview" id="preview">가</div>
+    
+    <select id="cho" onchange="update()"></select>
+    <select id="jung" onchange="update()"></select>
+    <select id="jong" onchange="update()"></select>
 
-<div class="container">
-    <div class="editor">
-        <div class="current-char" id="preview-char"></div>
-        <div class="controls">
-            <label>初声 (子音)</label><select id="cho" onchange="updatePreview()"></select>
-            <label>中声 (母音)</label><select id="jung" onchange="updatePreview()"></select>
-            <label>終声 (パッチム)</label><select id="jong" onchange="updatePreview()"></select>
-        </div>
-        <button onclick="addChar()">文字を追加 ＋</button>
-        <button class="clear-btn" onclick="clearAll()">リセット</button>
+    <div class="btn-grid">
+        <button class="btn-main" onclick="add()">文字を追加</button>
+        <button class="btn-trans" onclick="translateNow()">翻訳</button>
+        <button class="btn-speak" onclick="speak()">再生</button>
+        <button class="btn-del" onclick="del()">1文字消す</button>
     </div>
 
-    <div class="result-area">
-        <h3>表記</h3>
-        <div class="word-display" id="word-out"></div>
-        <h3>読み（ローマ字）</h3>
-        <div class="romaji-list" id="romaji-out"></div>
-        <div id="liaison-note" class="pronunciation"></div>
-    </div>
+    <div class="word-area" id="word-out"></div>
+    <div class="reading" id="romaji-out"></div>
+    <div class="trans-res" id="trans-out"></div>
 </div>
 
 <script>
 const choList = ["ㄱ","ㄲ","ㄴ","ㄷ","ㄸ","ㄹ","ㅁ","ㅂ","ㅃ","ㅅ","ㅆ","ㅇ","ㅈ","ㅉ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
-const jungList = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
+const jungList = ["ㅏ","ㅐ","ㅑ","ㅒ","ㅓ","ㅔ","ㅕ","ㅖ","ㅗ","ㅘ","ㅙ","ㅚ","ㅛ","ㅜ","ㅜ","ㅝ","ㅞ","ㅟ","ㅠ","ㅡ","ㅢ","ㅣ"];
 const jongList = ["なし","ㄱ","ㄲ","ㄳ","ㄴ","ㄵ","ㄶ","ㄷ","ㄹ","ㄺ","ㄻ","ㄼ","ㄽ","ㄾ","ㄿ","ㅀ","ㅁ","ㅂ","ㅄ","ㅅ","ㅆ","ㅇ","ㅈ","ㅊ","ㅋ","ㅌ","ㅍ","ㅎ"];
+const cR = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
+const vR = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
+const pR = ["","k","kk","k","n","n","n","t","l","k","m","l","l","l","p","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
 
-const cRom = ["g","kk","n","d","tt","r","m","b","pp","s","ss","","j","jj","ch","k","t","p","h"];
-const vRom = ["a","ae","ya","yae","eo","e","yeo","ye","o","wa","wae","oe","yo","u","wo","we","wi","yu","eu","ui","i"];
-const pRom = ["","k","kk","k","n","n","n","t","l","k","m","l","l","l","p","l","m","p","p","t","t","ng","t","t","k","t","p","t"];
-
-let history = [];
+let stack = [];
 
 function init() {
-    const fill = (id, list) => {
-        const el = document.getElementById(id);
-        list.forEach((char, i) => {
-            let opt = document.createElement("option");
-            opt.value = i; opt.innerText = char;
-            if(id === 'cho' && i === 11) opt.selected = true;
-            el.appendChild(opt);
+    const f = (id, list) => {
+        const e = document.getElementById(id);
+        list.forEach((v, i) => {
+            let o = document.createElement("option");
+            o.value = i; o.innerText = v;
+            if(id==='cho' && i===11) o.selected = true;
+            e.appendChild(o);
         });
     };
-    fill("cho", choList); fill("jung", jungList); fill("jong", jongList);
-    updatePreview();
+    f('cho', choList); f('jung', jungList); f('jong', jongList);
+    update();
 }
 
-function updatePreview() {
-    const c = parseInt(document.getElementById('cho').value);
-    const v = parseInt(document.getElementById('jung').value);
-    const p = parseInt(document.getElementById('jong').value);
-    const code = (c * 21 * 28) + (v * 28) + p + 0xAC00;
-    document.getElementById('preview-char').innerText = String.fromCharCode(code);
+function update() {
+    const c = +document.getElementById('cho').value;
+    const v = +document.getElementById('jung').value;
+    const p = +document.getElementById('jong').value;
+    document.getElementById('preview').innerText = String.fromCharCode((c*588)+(v*28)+p+0xAC00);
 }
 
-function addChar() {
-    const c = parseInt(document.getElementById('cho').value);
-    const v = parseInt(document.getElementById('jung').value);
-    const p = parseInt(document.getElementById('jong').value);
-    
-    history.push({ c, v, p, char: String.fromCharCode((c * 21 * 28) + (v * 28) + p + 0xAC00) });
+function add() {
+    const c = +document.getElementById('cho').value;
+    const v = +document.getElementById('jung').value;
+    const p = +document.getElementById('jong').value;
+    stack.push({c,v,p, char: document.getElementById('preview').innerText});
     render();
 }
+
+function del() { stack.pop(); render(); }
 
 function render() {
-    let word = "";
-    let romaji = [];
-    let liaisonMsg = "";
-
-    for (let i = 0; i < history.length; i++) {
-        let cur = history[i];
-        word += cur.char;
-        
-        let r = cRom[cur.c] + vRom[cur.v] + pRom[cur.p];
-        
-        // 連音化チェック: 前の文字にパッチムがあり、今の文字の初声が 'ㅇ' (index 11)
-        if (i > 0 && history[i-1].p > 0 && cur.c === 11) {
-            let prevP = pRom[history[i-1].p];
-            // 簡易ローマ字書き換え (例: an-yeong -> a-nyeong)
-            romaji[i-1] = romaji[i-1].slice(0, -prevP.length); 
-            r = prevP + r;
-            liaisonMsg = "⚠️ 連音化が発生しています";
+    let w = "", r = [];
+    stack.forEach((cur, i) => {
+        w += cur.char;
+        let rom = cR[cur.c] + vR[cur.v] + pR[cur.p];
+        if(i > 0 && stack[i-1].p > 0 && cur.c === 11) {
+            let pV = pR[stack[i-1].p];
+            r[i-1] = r[i-1].slice(0, -pV.length);
+            rom = pV + rom;
         }
-        romaji.push(r);
-    }
-
-    document.getElementById('word-out').innerText = word;
-    document.getElementById('romaji-out').innerText = romaji.join("-");
-    document.getElementById('liaison-note').innerHTML = liaisonMsg;
+        r.push(rom);
+    });
+    document.getElementById('word-out').innerText = w;
+    document.getElementById('romaji-out').innerText = r.join("-");
+    document.getElementById('trans-out').style.display = "none";
 }
 
-function clearAll() {
-    history = [];
-    render();
+async function translateNow() {
+    const text = document.getElementById('word-out').innerText;
+    if(!text) return;
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=ko&tl=ja&dt=t&q=${encodeURIComponent(text)}`;
+    try {
+        const res = await fetch(url);
+        const data = await res.json();
+        document.getElementById('trans-out').innerText = data[0][0][0];
+        document.getElementById('trans-out').style.display = "block";
+    } catch(e) { alert("翻訳エラー。時間を置いて試してください。"); }
+}
+
+function speak() {
+    const t = document.getElementById('word-out').innerText;
+    if(!t) return;
+    const u = new SpeechSynthesisUtterance(t);
+    u.lang = 'ko-KR';
+    window.speechSynthesis.speak(u);
 }
 
 init();
